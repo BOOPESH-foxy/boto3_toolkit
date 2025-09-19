@@ -12,9 +12,10 @@ def list_buckets():
 
 @app.command("create_bucket")
 
-def create_bucket():
+def create_bucket(name,region):
     "Create new bucket"
-    raise NotImplementedError
+    api_result = bucket.create_bucket(name,region)
+    typer.echo(api_result)
 
 if __name__ == "__main__":
     app()
