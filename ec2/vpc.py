@@ -13,7 +13,6 @@ CIDR_BLOCK = os.getenv('CIDR_BLOCK')
 SSH_CIDR = os.getenv('SSH_CIDR')
 
 
-
 def check_vpc_existence():
     print(f"! Checking if {VPC_NAME} already exists")
     result_Vpc_exists = ec2.describe_vpcs(Filters=[{"Name":"tag:Name","Values":[VPC_NAME]}])
@@ -24,17 +23,19 @@ def check_vpc_existence():
         return vpc_id
     else:
         print(f"! Vpc {VPC_NAME} doesn't exist,Creating one.")
-        create_vpc()
+        vpc_id = create_vpc()
+        return vpc_id
+
 
 
 def check_security_group_existence(vpc_id: str):
     print(f"! Checking if {SECURITY_GROUP_NAME} already exists")
+    print(vpc_id)
     response = ec2.describe_security_groups(
     Filters=[
         {"Name": "vpc-id", "Values": [vpc_id]},
         {"Name": "group-name", "Values":[SECURITY_GROUP_NAME]}
-    ]
-)
+    ])
     sg_list = response["SecurityGroups"]
     if(sg_list):
         sg_id = response["SecurityGroups"][0]["GroupId"]    
