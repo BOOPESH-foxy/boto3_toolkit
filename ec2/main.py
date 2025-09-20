@@ -1,16 +1,7 @@
-import boto3
-import botocore
-import key_pair
-
-def launch_ec2_instance():
-    pass
-
-def create_VPC():
-    pass
-
-def create_subnet():
-    pass
-
+import key_pair,security_group
+import os
 
 if __name__ == "__main__":
+    os.system('clear')
     key_pair.check_key_pair()
+    security_group.check_security_group()
