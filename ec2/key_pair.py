@@ -14,9 +14,7 @@ KEY_NAME = os.getenv('KEY_NAME')
 def key_pair_generation():
     try:
         key_pair = ec2.create_key_pair(KeyName=KEY_NAME)
-        print("key_pair::",key_pair)
         private_key = key_pair["KeyMaterial"]
-
         with open(KEY_FILE,"w") as write_file:
             write_file.write(private_key)
 
@@ -29,7 +27,7 @@ def key_pair_generation():
 
 def check_key_pair():
     if(os.path.exists(KEY_FILE)):
-        print(" :: Key-pair exists")
+        print("! Key-pair exists")
     else:
         print("+ Creating Key-pair")
         key_pair_generation()
