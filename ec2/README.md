@@ -30,6 +30,8 @@ aws configure
     KEY_NAME = 'your-user-key'
     KEY_FILE = '../path-to/generated-key-pair.pem'
     INSTANCE_TYPE = 'desired-instance-type'
+    CIDR_BLOCK = 'desired-ip/16'
+
 
 ### 3. Clone repo and start execution
 ```bash
