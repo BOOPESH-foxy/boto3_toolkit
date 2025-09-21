@@ -1,56 +1,45 @@
-# AWS EC2 Automation with Boto3
+# AWS Boto3 Toolkit
 
-This repository is a **hands-on tutorial** for managing **Amazon EC2** instances using **Python (boto3)**.  
-It is structured step by step: starting from **key pair generation**, and extending toward **security groups, launching instances, and SSH connections**.
+A **Python toolkit built on boto3** that helps automate and manage **AWS resources** from the command line.  
+This project is currently **enhanced for EC2** (VPC, key pairs, and security groups), with initial support for **S3 bucket operations**.
 
----
-
-## Roadmap
-
-- Generate and manage EC2 key pairs  
-- Create and manage security groups (firewall rules)  
-- Launch EC2 instances  
-- Wait for instance readiness  
-- SSH into EC2 instances and run commands  
-- Interactive shell access via Python  
+The goal is to provide a **lightweight CLI toolkit** and reusable Python modules for everyday AWS tasks.
 
 ---
 
-## Setup
+## Features
 
-### 1. Install and configure
+### EC2 (Enhanced & Tested)
+- **VPC Management**: Create, describe, and verify VPCs by name.
+- **Key Pair Handling**: Create and manage EC2 key pairs.
+- **Security Groups**: Define and configure security groups for your workloads.
+- **EC2 Resource Client**: Wrapper around boto3 to simplify EC2 workflows.
+
+### S3 (Work in Progress)
+- **Bucket Operations**: List buckets, create new ones (via Typer CLI).
+- **S3 Client Wrapper**: Basic client setup to extend later.
+
+---
+
+## Prerequisites
+
+Before running the toolkit, you need to install the following dependencies:
+
 ```bash
-pip install boto3 python-dotenv
-aws configure
-```
-### 2. .env
-- create a .env file with the following contents
-  ```env
-    REGION = 'your-aws-region'
-    KEY_NAME = 'your-user-key'
-    KEY_FILE = '../path-to/generated-key-pair.pem'
-    INSTANCE_TYPE = 'desired-instance-type'
-    CIDR_BLOCK = 'desired-ip/16'
+# AWS SDK for Python (EC2, S3, etc.)
+pip install boto3
 
+# Low-level AWS library for boto3 (auto-installed with boto3)
+pip install botocore
 
-### 3. Clone repo and start execution
-```bash
-git clone https://github.com/BOOPESH-foxy/boto3_toolkit.git
-cd boto3_toolkit/ec2
-python3 main.py
-```
+# For creating the CLI interface
+pip install typer
 
-## Learning Goals
-1. Work with EC2 key pairs
-2. Understand security groups and why they matter
-3. Launch and manage EC2 instances with Python
-4. Connect to EC2 programmatically and securely
+# For loading environment variables from .env files
+pip install python-dotenv
 
-## Notes
-1. Never commit your .pem files
-2. AWS will only give the private key once. If lost, delete and recreate the key pair.
-3. Allow SSH access only to the required IP's(Avoid 0.0.0.0/0).
+# AWS CLI (optional, for broader AWS command-line management)
+pip install awscli
 
-## Contributions
-
-Contributions are welcome! Fork the repo, open issues, or submit PRs to expand EC2 automation (EBS volumes, snapshots, AMI management, etc.).
+# HTTP requests needed by botocore and boto3
+pip install requests
