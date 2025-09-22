@@ -1,4 +1,3 @@
-import boto3
 import botocore
 import os
 from ec2_resource import ec2_client
@@ -11,7 +10,16 @@ SECURITY_GROUP_NAME = os.getenv('SECURITY_GROUP_NAME')
 VPC_NAME = os.getenv('VPC_NAME')
 CIDR_BLOCK = os.getenv('CIDR_BLOCK')
 SSH_CIDR = os.getenv('SSH_CIDR')
+REGION = os.getenv('REGION')
+SUBNET_CIDR_BLOCK = os.getenv('SUBNET_CIDR_BLOCK')
 
+def get_availability_zones():
+    az_response = ec2.describe_availability_zones(
+    )
+    az_filtered = az_response['AvailabilityZones']
+    az_name = az_filtered[0]['ZoneName']
+    az_id = az_filtered[0]['ZoneId']
+    return az_name,az_id
 
 def check_vpc_existence():
     print(f"! Checking if {VPC_NAME} already exists")
@@ -42,7 +50,7 @@ def check_security_group_existence(vpc_id: str):
         return False
 
 def check_igw_existence(vpc_id: str):
-    print(f"! checking if internet-gateway exists for {VPC_NAME} ")
+    print(f"! checking if internet-gateway exists and attached to {VPC_NAME} ")
     response = ec2.describe_internet_gateways(
         Filters = [
             {"Name": "attachment.vpc-id", "Values": [vpc_id]}
@@ -51,7 +59,7 @@ def check_igw_existence(vpc_id: str):
     available_internet_gateways = response["InternetGateways"]
     if(available_internet_gateways):
         igw_id = available_internet_gateways[0]['InternetGatewayId']
-        print(f"! Internet-gateway exists for vpc {VPC_NAME}")
+        print(f"! Internet-gateway already exists")
         return igw_id
     else:
         print(f"! Internet-gateway for {VPC_NAME} doesn't exist, creating one !")
@@ -62,24 +70,28 @@ def create_vpc():
     if(vpc_id):
         return vpc_id
     else:
-        print("! Creating VPC ")
-        vpc_response = ec2.create_vpc(
-        CidrBlock = CIDR_BLOCK,
-        TagSpecifications=[
-            {
-                'ResourceType': 'vpc',
-                'Tags': [
-                    {
-                        'Key': 'Name',
-                        'Value': VPC_NAME
-                    },
-                ],
-            },
-        ],
-        )
-        vpc_id = vpc_response["Vpc"]["VpcId"]
-        print(f"+ Created VPC id={vpc_id}")
-        return vpc_id
+        try:
+            print("! Creating VPC ")
+            response_vpc = ec2.create_vpc(
+            CidrBlock = CIDR_BLOCK,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'vpc',
+                    'Tags': [
+                        {
+                            'Key': 'Name',
+                            'Value': VPC_NAME
+                        },
+                    ],
+                },
+            ],
+            )
+            vpc_id = response_vpc["Vpc"]["VpcId"]
+            print(f"+ Created VPC id={vpc_id}")
+            return vpc_id
+        
+        except botocore.exceptions.ClientError as e:
+            print(":: Error :",e)
 
 def create_security_group(vpc_id: str):
     security_group_existence = check_security_group_existence(vpc_id)
@@ -88,7 +100,7 @@ def create_security_group(vpc_id: str):
     
     else:
         try:
-            print("! Crearing security group")
+            print("! Creating security group")
             response_security_group = ec2.create_security_group(
                     Description = 'boto3 ssh vpc',
                     GroupName = SECURITY_GROUP_NAME,
@@ -129,34 +141,82 @@ def create_internet_gateway(vpc_id: str):
     if(igw_existence):
         return igw_existence
     else:
-        print("! Creating internet-gateway")
-        response = ec2.create_internet_gateway(
+        try:
+            print("! Creating internet-gateway")
+            response_igw = ec2.create_internet_gateway(
+                TagSpecifications=[
+                    {
+                        'ResourceType': 'internet-gateway',
+                        'Tags': [
+                            {
+                                'Key': 'boto3-ec2',
+                                'Value': 'foo-bar'
+                            },
+                        ]
+                    }
+                ]
+            )
+            igw_id = response_igw['InternetGateway']['InternetGatewayId']
+            print(f"+ Created internet-gateway id={igw_id} for {VPC_NAME}")
+
+            print(f"! Attaching the internet gateway to the VPC")
+            ec2.attach_internet_gateway(
+                InternetGatewayId=igw_id,
+                VpcId = vpc_id
+            )
+            print(f"+ Attached the internet gateway successfully!")
+            return igw_id
+
+        except botocore.exceptions.ClientError as e:
+            print(":: Error :",e)
+        
+
+def check_subnets_for_vpc(vpc_id: str):
+    print(f"! checking if subnets exists for {VPC_NAME}")
+    response = ec2.describe_subnets(
+        Filters=[
+            {"Name": "vpc-id","Values": [vpc_id]}
+        ]
+    )
+    subnets_available = response['Subnets']
+    if (subnets_available):
+        subnet_id = subnets_available[0]['SubnetId']
+        print(f"! Subnets for {VPC_NAME} already exists!")
+        return subnet_id 
+    else:
+        print(f"! Subnets for {VPC_NAME} doesn't exist, creating one !")
+        return False
+
+def create_subnets_for_vpc(vpc_id: str,az_name: str,az_id: str):
+    subnet_existence = check_subnets_for_vpc(vpc_id)
+    if(subnet_existence):
+        return subnet_existence
+    else:
+        print("! Creating subnets")
+        response_subnet = ec2.create_subnet(
             TagSpecifications=[
                 {
-                    'ResourceType': 'internet-gateway',
-                    'Tags': [
+                    'ResourceType': 'subnet',
+                    'Tags':[
                         {
                             'Key': 'boto3-ec2',
                             'Value': 'foo-bar'
                         },
                     ]
-                }
-            ]
+                },
+            ],
+            AvailabilityZoneId=az_id,
+            CidrBlock=SUBNET_CIDR_BLOCK,
+            VpcId=vpc_id
         )
-        igw_id = response['InternetGateway']['InternetGatewayId']
-        print(f"+ Created internet-gateway id={igw_id} for {VPC_NAME}")
+        print(f"+ Created subnet for {VPC_NAME}")
+        
 
-        print(f"! Attaching the internet gateway to the VPC")
-        ec2.attach_internet_gateway(
-            InternetGatewayId=igw_id,
-            VpcId = vpc_id
-        )
-        print(f"+ Attached the internet gateway successfully!")
-        return igw_id
-    
 
 if __name__ == "__main__":
     os.system('clear')
     vpc_id = create_vpc()
     sg_id = create_security_group(vpc_id)
     igw_id = create_internet_gateway(vpc_id)
+    az_name,az_id=get_availability_zones()
+    subnet_id = create_subnets_for_vpc(vpc_id,az_name,az_id)
