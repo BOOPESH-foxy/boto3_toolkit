@@ -3,5 +3,3 @@ import os
 
 if __name__ == "__main__":
     os.system('clear')
-    key_pair.check_key_pair()
-    vpc.create_security_group()
