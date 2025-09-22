@@ -51,7 +51,7 @@ def check_igw_existence(vpc_id: str):
     available_internet_gateways = response["InternetGateways"]
     if(available_internet_gateways):
         igw_id = available_internet_gateways[0]['InternetGatewayId']
-        print(f"! Internet-gateway id={igw_id} exists for vpc {VPC_NAME}")
+        print(f"! Internet-gateway exists for vpc {VPC_NAME}")
         return igw_id
     else:
         print(f"! Internet-gateway for {VPC_NAME} doesn't exist, creating one !")
@@ -129,7 +129,7 @@ def create_internet_gateway(vpc_id: str):
     if(igw_existence):
         return igw_existence
     else:
-        print("! Crearing internet-gateway")
+        print("! Creating internet-gateway")
         response = ec2.create_internet_gateway(
             TagSpecifications=[
                 {
@@ -145,6 +145,13 @@ def create_internet_gateway(vpc_id: str):
         )
         igw_id = response['InternetGateway']['InternetGatewayId']
         print(f"+ Created internet-gateway id={igw_id} for {VPC_NAME}")
+
+        print(f"! Attaching the internet gateway to the VPC")
+        ec2.attach_internet_gateway(
+            InternetGatewayId=igw_id,
+            VpcId = vpc_id
+        )
+        print(f"+ Attached the internet gateway successfully!")
         return igw_id
     
 
