@@ -48,10 +48,13 @@ def check_igw_existence(vpc_id: str):
             {"Name": "attachment.vpc-id", "Values": [vpc_id]}
         ]
     )
-    igw_id = response['InternetGateways'][0]['InternetGatewayId']
-    if(igw_id):
+    available_internet_gateways = response["InternetGateways"]
+    if(available_internet_gateways):
+        igw_id = available_internet_gateways[0]['InternetGatewayId']
+        print(f"! Internet-gateway id={igw_id} exists for vpc {VPC_NAME}")
         return igw_id
     else:
+        print(f"! Internet-gateway for {VPC_NAME} doesn't exist, creating one !")
         return False
 
 def create_vpc():
@@ -124,10 +127,9 @@ def create_security_group(vpc_id: str):
 def create_internet_gateway(vpc_id: str):
     igw_existence = check_igw_existence(vpc_id)
     if(igw_existence):
-        print(f"! Internet-gateway id={igw_existence} exists for vpc {VPC_NAME}")
         return igw_existence
     else:
-        print(f"! Creating internet-gateway for {VPC_NAME}")
+        print("! Crearing internet-gateway")
         response = ec2.create_internet_gateway(
             TagSpecifications=[
                 {
