@@ -14,19 +14,19 @@ REGION = os.getenv('REGION')
 SUBNET_CIDR_BLOCK = os.getenv('SUBNET_CIDR_BLOCK')
 
 def get_availability_zones():
-    az_response = ec2.describe_availability_zones(
+    response_availability_zone_list = ec2.describe_availability_zones(
     )
-    az_filtered = az_response['AvailabilityZones']
+    az_filtered = response_availability_zone_list['AvailabilityZones']
     az_name = az_filtered[0]['ZoneName']
     az_id = az_filtered[0]['ZoneId']
     return az_name,az_id
 
 def check_vpc_existence():
     print(f"! Checking if {VPC_NAME} already exists")
-    result_Vpc_exists = ec2.describe_vpcs(Filters=[{"Name":"tag:Name","Values":[VPC_NAME]}])
-    vpc_list = result_Vpc_exists["Vpcs"]
+    response_vpc_existence = ec2.describe_vpcs(Filters=[{"Name":"tag:Name","Values":[VPC_NAME]}])
+    vpc_list = response_vpc_existence["Vpcs"]
     if(vpc_list):
-        vpc_id = result_Vpc_exists["Vpcs"][0]["VpcId"]
+        vpc_id = response_vpc_existence["Vpcs"][0]["VpcId"]
         print(f"! VPC {VPC_NAME} exists")
         return vpc_id
     else:
@@ -35,28 +35,28 @@ def check_vpc_existence():
 
 def check_security_group_existence(vpc_id: str):
     print(f"! Checking if {SECURITY_GROUP_NAME} already exists")
-    response = ec2.describe_security_groups(
+    response_security_group_existence = ec2.describe_security_groups(
     Filters=[
         {"Name": "vpc-id", "Values": [vpc_id]},
         {"Name": "group-name", "Values":[SECURITY_GROUP_NAME]}
     ])
-    sg_list = response["SecurityGroups"]
+    sg_list = response_security_group_existence["SecurityGroups"]
     if(sg_list):
-        sg_id = response["SecurityGroups"][0]["GroupId"]    
+        sg_id = sg_list[0]["GroupId"]    
         print(f"! Security Group {SECURITY_GROUP_NAME} exists")
-        return True
+        return sg_id
     else:
         print(f"! Security Group {SECURITY_GROUP_NAME} doesn't exist, Creating one.")
         return False
 
 def check_igw_existence(vpc_id: str):
     print(f"! checking if internet-gateway exists and attached to {VPC_NAME} ")
-    response = ec2.describe_internet_gateways(
+    response_igw_existence = ec2.describe_internet_gateways(
         Filters = [
             {"Name": "attachment.vpc-id", "Values": [vpc_id]}
         ]
     )
-    available_internet_gateways = response["InternetGateways"]
+    available_internet_gateways = response_igw_existence["InternetGateways"]
     if(available_internet_gateways):
         igw_id = available_internet_gateways[0]['InternetGatewayId']
         print(f"! Internet-gateway already exists")
@@ -67,12 +67,12 @@ def check_igw_existence(vpc_id: str):
 
 def check_subnets_for_vpc(vpc_id: str):
     print(f"! checking if subnets exists for {VPC_NAME}")
-    response = ec2.describe_subnets(
+    response_subnets_existence = ec2.describe_subnets(
         Filters=[
             {"Name": "vpc-id","Values": [vpc_id]}
         ]
     )
-    subnets_available = response['Subnets']
+    subnets_available = response_subnets_existence['Subnets']
     if (subnets_available):
         subnet_id = subnets_available[0]['SubnetId']
         print(f"! Subnets for {VPC_NAME} already exists!")
@@ -110,9 +110,9 @@ def create_vpc():
             print(":: Error :",e)
 
 def create_security_group(vpc_id: str):
-    security_group_existence = check_security_group_existence(vpc_id)
-    if(security_group_existence):
-        return True
+    security_group_id = check_security_group_existence(vpc_id)
+    if(security_group_id):
+        return security_group_id
     
     else:
         try:
@@ -144,15 +144,16 @@ def create_security_group(vpc_id: str):
                 }]
             )
             print("+ Created security group id=",sg_id,f"opening 22 from {CIDR_BLOCK}")
-            return True
+            return sg_id
 
         except botocore.exceptions.ClientError as e:
             print(":: Error :",e)
+            raise
 
 def create_internet_gateway(vpc_id: str):
-    igw_existence = check_igw_existence(vpc_id)
-    if(igw_existence):
-        return igw_existence
+    igw_id = check_igw_existence(vpc_id)
+    if(igw_id):
+        return igw_id
     else:
         try:
             print("! Creating internet-gateway")
@@ -181,43 +182,47 @@ def create_internet_gateway(vpc_id: str):
 
         except botocore.exceptions.ClientError as e:
             print(":: Error :",e)
+            raise
         
 
 def create_subnets_for_vpc(vpc_id: str,az_name: str,az_id: str):
-    subnet_existence = check_subnets_for_vpc(vpc_id)
-    if(subnet_existence):
-        return subnet_existence
-    else:
-        print("! Creating subnets")
-        response_subnet = ec2.create_subnet(
-            TagSpecifications=[
-                {
-                    'ResourceType': 'subnet',
-                    'Tags':[
-                        {
-                            'Key': 'boto3-ec2',
-                            'Value': 'foo-bar'
-                        },
-                    ]
-                },
-            ],
-            AvailabilityZoneId=az_id,
-            CidrBlock=SUBNET_CIDR_BLOCK,
-            VpcId=vpc_id,
-        )
-
-        subnet = (response_subnet['Subnet'])
-        subnet_id = subnet['SubnetId']
-        print(f"+ Created subnet for {VPC_NAME}")
+    subnet_id = check_subnets_for_vpc(vpc_id)
+    if(subnet_id):
         return subnet_id
+    else:
+        try:
+            print("! Creating subnets")
+            response_subnet = ec2.create_subnet(
+                TagSpecifications=[
+                    {
+                        'ResourceType': 'subnet',
+                        'Tags':[
+                            {
+                                'Key': 'boto3-ec2',
+                                'Value': 'foo-bar'
+                            },
+                        ]
+                    },
+                ],
+                AvailabilityZoneId=az_id,
+                CidrBlock=SUBNET_CIDR_BLOCK,
+                VpcId=vpc_id,
+            )
+            subnet = (response_subnet['Subnet'])
+            subnet_id = subnet['SubnetId']
 
-def check_route_table_existence(vpc_id: str):
-    
-    rt_response = ec2.describe_route_table()
-    print(rt_response)
-
-def create_route_table(vpc_id: str):
-    pass
+            response_modified_attribute = ec2.modify_subnet_attribute(
+                MapPublicIpOnLaunch={
+                    "Value": True
+                },
+                SubnetId=subnet_id
+            )
+            print(f"+ Created subnet for {VPC_NAME}")
+            return subnet_id
+        
+        except botocore.exceptions.ClietError as e:
+            print("::Error::",e)
+            raise
 
 if __name__ == "__main__":
     os.system('clear')
