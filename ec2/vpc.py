@@ -25,8 +25,6 @@ def check_vpc_existence():
         print(f"! Vpc {VPC_NAME} doesn't exist,Creating one.")
         return False
 
-
-
 def check_security_group_existence(vpc_id: str):
     print(f"! Checking if {SECURITY_GROUP_NAME} already exists")
     response = ec2.describe_security_groups(
@@ -43,6 +41,18 @@ def check_security_group_existence(vpc_id: str):
         print(f"! Security Group {SECURITY_GROUP_NAME} doesn't exist, Creating one.")
         return False
 
+def check_igw_existence(vpc_id: str):
+    print(f"! checking if internet-gateway exists for {VPC_NAME} ")
+    response = ec2.describe_internet_gateways(
+        Filters = [
+            {"Name": "attachment.vpc-id", "Values": [vpc_id]}
+        ]
+    )
+    igw_id = response['InternetGateways'][0]['InternetGatewayId']
+    if(igw_id):
+        return igw_id
+    else:
+        return False
 
 def create_vpc():
     vpc_id = check_vpc_existence()
@@ -111,7 +121,33 @@ def create_security_group(vpc_id: str):
             print(":: Error :",e)
 
 
+def create_internet_gateway(vpc_id: str):
+    igw_existence = check_igw_existence(vpc_id)
+    if(igw_existence):
+        print(f"! Internet-gateway id={igw_existence} exists for vpc {VPC_NAME}")
+        return igw_existence
+    else:
+        print(f"! Creating internet-gateway for {VPC_NAME}")
+        response = ec2.create_internet_gateway(
+            TagSpecifications=[
+                {
+                    'ResourceType': 'internet-gateway',
+                    'Tags': [
+                        {
+                            'Key': 'boto3-ec2',
+                            'Value': 'foo-bar'
+                        },
+                    ]
+                }
+            ]
+        )
+        igw_id = response['InternetGateway']['InternetGatewayId']
+        print(f"+ Created internet-gateway id={igw_id} for {VPC_NAME}")
+        return igw_id
+    
+
 if __name__ == "__main__":
     os.system('clear')
     vpc_id = create_vpc()
     sg_id = create_security_group(vpc_id)
+    igw_id = create_internet_gateway(vpc_id)
