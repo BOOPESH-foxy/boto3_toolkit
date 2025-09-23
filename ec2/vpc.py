@@ -27,7 +27,7 @@ def check_vpc_existence():
     vpc_list = response_vpc_existence["Vpcs"]
     if(vpc_list):
         vpc_id = response_vpc_existence["Vpcs"][0]["VpcId"]
-        print(f"! VPC {VPC_NAME} exists")
+        print(f"! VPC {VPC_NAME} exists\n")
         return vpc_id
     else:
         print(f"! Vpc {VPC_NAME} doesn't exist,Creating one.")
@@ -43,7 +43,7 @@ def check_security_group_existence(vpc_id: str):
     sg_list = response_security_group_existence["SecurityGroups"]
     if(sg_list):
         sg_id = sg_list[0]["GroupId"]    
-        print(f"! Security Group {SECURITY_GROUP_NAME} exists")
+        print(f"! Security Group {SECURITY_GROUP_NAME} exists\n")
         return sg_id
     else:
         print(f"! Security Group {SECURITY_GROUP_NAME} doesn't exist, Creating one.")
@@ -59,7 +59,7 @@ def check_igw_existence(vpc_id: str):
     available_internet_gateways = response_igw_existence["InternetGateways"]
     if(available_internet_gateways):
         igw_id = available_internet_gateways[0]['InternetGatewayId']
-        print(f"! Internet-gateway already exists")
+        print(f"! Internet-gateway already exists\n")
         return igw_id
     else:
         print(f"! Internet-gateway for {VPC_NAME} doesn't exist, creating one !")
@@ -75,7 +75,7 @@ def check_subnets_for_vpc(vpc_id: str):
     subnets_available = response_subnets_existence['Subnets']
     if (subnets_available):
         subnet_id = subnets_available[0]['SubnetId']
-        print(f"! Subnets for {VPC_NAME} already exists!")
+        print(f"! Subnets for {VPC_NAME} already exists!\n")
         return subnet_id 
     else:
         print(f"! Subnets for {VPC_NAME} doesn't exist, creating one !")
@@ -225,9 +225,6 @@ def create_subnets_for_vpc(vpc_id: str,az_name: str,az_id: str):
             raise
 
 def setup_vpc_resources():
-    """
-    Create/check VPC, SG, IGW, Subnet and return their IDs
-    """
     vpc_id = create_vpc()
     sg_id = create_security_group(vpc_id)
     igw_id = create_internet_gateway(vpc_id)
