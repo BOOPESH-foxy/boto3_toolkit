@@ -224,10 +224,10 @@ def create_subnets_for_vpc(vpc_id: str,az_name: str,az_id: str):
             print("::Error::",e)
             raise
 
-if __name__ == "__main__":
-    os.system('clear')
-    vpc_id = create_vpc()
-    sg_id = create_security_group(vpc_id)
-    igw_id = create_internet_gateway(vpc_id)
-    az_name,az_id=get_availability_zones()
-    subnet_id = create_subnets_for_vpc(vpc_id,az_name,az_id)
+# if __name__ == "__main__":
+#     os.system('clear')
+#     vpc_id = create_vpc()
+#     sg_id = create_security_group(vpc_id)
+#     igw_id = create_internet_gateway(vpc_id)
+#     az_name,az_id=get_availability_zones()
+#     subnet_id = create_subnets_for_vpc(vpc_id,az_name,az_id)
