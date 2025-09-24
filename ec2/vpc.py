@@ -2,6 +2,7 @@ import botocore
 import os
 from ec2_resource import ec2_client
 from dotenv import load_dotenv
+from route_table import modify_route_table
 
 load_dotenv()
 
@@ -224,12 +225,13 @@ def create_subnets_for_vpc(vpc_id: str,az_name: str,az_id: str):
             print("::Error::",e)
             raise
 
-def setup_vpc_resources():
+def setup_ec2_resources():
     vpc_id = create_vpc()
     sg_id = create_security_group(vpc_id)
     igw_id = create_internet_gateway(vpc_id)
     az_name, az_id = get_availability_zones()
     subnet_id = create_subnets_for_vpc(vpc_id, az_name, az_id)
+    route_table_id = modify_route_table()
     
     return {
         "vpc_id": vpc_id,

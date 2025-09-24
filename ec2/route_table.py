@@ -1,4 +1,5 @@
 import os
+import botocore
 from ec2_resource import ec2_client
 from dotenv import load_dotenv
 
@@ -20,14 +21,12 @@ def check_route_table_existence(vpc_id: str):
         return route_table_id
     else:
         print(f"No route tables found for {VPC_NAME}")
-        return False
+        route_table_id = create_route_table()
+        return route_table_id
 
 def create_route_table(vpc_id: str):
-    response_existence = check_route_table_existence(vpc_id)
-    if(response_existence):
-        return response_existence
-    else:
-        print(f"! No route tables found for {VPC_NAME}, Do create One")
+    try:
+        print(f"Creating route table for {VPC_NAME}")
         response_route_table_creation = ec2.create_route_table(
             TagSpecifications=[
                 {
@@ -43,3 +42,9 @@ def create_route_table(vpc_id: str):
             VpcId=vpc_id
         )
         print(response_route_table_creation)
+    except botocore.Exception as e:
+        print(":: Error ::",e)
+        raise
+
+def modify_route_table():
+    route_table_id = check_route_table_existence()
