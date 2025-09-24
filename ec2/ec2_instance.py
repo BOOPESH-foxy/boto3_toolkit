@@ -79,7 +79,8 @@ def create_ec2_instance():
             )
             instance_id=response_run_instances['Instances'][0]
             id=instance_id['InstanceId']
-            wait_for_instance_creation(id)
+            wait_for = 'instance_running'
+            wait_for_instance_state(id,wait_for)
             print(f"+ Created instance {INSTANCE_NAME} id={id}")
             return id
         
@@ -87,16 +88,31 @@ def create_ec2_instance():
             print(":: Error :",e)
             raise
 
-def wait_for_instance_creation(id: str):
-    waiter = ec2.get_waiter('instance_running')
+def wait_for_instance_state(id: str,wait_for: str):
+    waiter = ec2.get_waiter(wait_for)
     waiter.wait(InstanceIds=[id])
 
-
 def stop_ec2_instance():
-    pass
+    instance_id = check_instance_existence()
+    print(f"! To Stop instance {INSTANCE_NAME}")
+    response = ec2.stop_instances(
+        InstanceIds=[instance_id]
+    )
+    wait_for = 'instance_stopped'
+    wait_for_instance_state(instance_id,)
+    print("- Stopped instance successfully")
+    return True
 
-def terminate_instance():
-    pass
+def terminate_ec2_instance():
+    instance_id = check_instance_existence()
+    print(f"! Terminate instance {INSTANCE_NAME}")
+    response = ec2.terminate_instances(
+        InstanceIds=[instance_id]
+    )
+    wait_for = 'instance_terminated'
+    wait_for_instance_state(instance_id,)
+    print("- Terminated instance successfully")
+    return True
 
 
 def get_public_ip():

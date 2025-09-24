@@ -3,7 +3,7 @@ import typer
 from vpc import setup_ec2_resources
 from ssh_ec2 import ssh_ec2_instance
 from key_pair import check_key_pair,key_pair_generation
-from ec2_instance import check_instance_existence,create_ec2_instance
+from ec2_instance import check_instance_existence,create_ec2_instance,stop_ec2_instance,terminate_ec2_instance
 
 
 app = typer.Typer(help="EC2 CLI resource manager\n")
@@ -39,21 +39,21 @@ def ssh_instance_typer():
     ssh_ec2_instance()
 
 @app.command("stop_instance")
-def ssh_instance_typer():
-    "SSH into the created ec2 instance"
+def stop_instance_typer():
+    "Stop the ec2 instance"
     ssh_ec2_instance()
 
 @app.command("terminate_instance")
-def ssh_instance_typer():
-    "SSH into the created ec2 instance"
+def terminate_instance_typer():
+    "Terminate the ec2 instance"
     ssh_ec2_instance()
 
 @app.command("delete_ec2_resources")
-def ssh_instance_typer():
-    "SSH into the created ec2 instance"
+def delete_instance_resources_typer():
+    "Deletes the VPC and attached resources(sg,igw,route-table,subnets)"
     ssh_ec2_instance()
 
 if __name__ == "__main__":
-    os.system('clear')
+    # os.system('clear')
     app()
 

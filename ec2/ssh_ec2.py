@@ -38,5 +38,3 @@ def ssh_ec2_instance():
 
         except Exception as e:
             print("SSH connection failed:", e)
-
-ssh_ec2_instance()
