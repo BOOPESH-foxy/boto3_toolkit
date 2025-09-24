@@ -1,5 +1,12 @@
-.env
-__pycache__/
-.venv
-*.pyc
+.venv/
+venv/
+env/
+ENV/
+
 key_pair/
+*.pem
+.env
+*.log
+*.tmp
+
+__pycache__/
