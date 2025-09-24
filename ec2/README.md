@@ -78,6 +78,9 @@ python3 main.py --help
 ```
 ```
 Command	                                            Description
+
+check_key_pair                  Checks if the key-pair mentioned (in the .env) exists locale path and in aws resources
+create_key_pair                 Creates key pair if the key-pair file mentioned in .env doesn't exist
 create_ec2_resources	        Create VPC, IGW, subnets, route table, and security groups
 create_ec2_instance	            Launch a ready-to-use EC2 instance with all parameters from .env
 is_instance_running	            Check if the EC2 instance is running
