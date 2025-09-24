@@ -1,8 +1,8 @@
-from ec2_resource import ec2_client
 import os
-from dotenv import load_dotenv
 import stat
 import botocore
+from dotenv import load_dotenv
+from ec2_resource import ec2_client
 
 load_dotenv()
 ec2 = ec2_client()

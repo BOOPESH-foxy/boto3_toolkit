@@ -6,8 +6,7 @@ from key_pair import check_key_pair,key_pair_generation
 from ec2_instance import check_instance_existence,create_ec2_instance
 
 
-app = typer.Typer(help="EC2 CLI resource manager\n"
-"This package completely uses the parameters provided in the .env file. Absebce of parameters raises error")
+app = typer.Typer(help="EC2 CLI resource manager\n")
 
 @app.command("check_key_pair")
 def check_key_pair_typer():
@@ -35,6 +34,21 @@ def create_ec2_resources_typer():
     setup_ec2_resources()
 
 @app.command("ssh_instance")
+def ssh_instance_typer():
+    "SSH into the created ec2 instance"
+    ssh_ec2_instance()
+
+@app.command("stop_instance")
+def ssh_instance_typer():
+    "SSH into the created ec2 instance"
+    ssh_ec2_instance()
+
+@app.command("terminate_instance")
+def ssh_instance_typer():
+    "SSH into the created ec2 instance"
+    ssh_ec2_instance()
+
+@app.command("delete_ec2_resources")
 def ssh_instance_typer():
     "SSH into the created ec2 instance"
     ssh_ec2_instance()

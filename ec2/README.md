@@ -102,9 +102,9 @@ boto3_toolkit/
 
 1. **Work with EC2 Key Pairs**: Learn how to securely generate, store, and use EC2 key pairs.
 2. **Understand Security Groups**: Learn how to create and manage security groups to define firewall rules for EC2 instances.
-## TODO's
 3. **Launch EC2 Instances**: Learn how to provision EC2 instances with the right configuration (instance type, AMI, security groups, etc.).
-4. **Connect to EC2 Instances Programmatically**: Use Python to SSH into EC2 instances and run commands interactively.
+## TODO's
+1. **Connect to EC2 Instances Programmatically**: Use Python to SSH into EC2 instances and run commands interactively.
 
 ---
 

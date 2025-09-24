@@ -1,12 +1,12 @@
-import botocore
 import os
-from ec2_resource import ec2_client
+import botocore
 from dotenv import load_dotenv
+from ec2_resource import ec2_client
 from route_table import modify_route_table
 
 load_dotenv()
-
 ec2 = ec2_client()
+
 SECURITY_GROUP_NAME = os.getenv('SECURITY_GROUP_NAME')
 VPC_NAME = os.getenv('VPC_NAME')
 CIDR_BLOCK = os.getenv('CIDR_BLOCK')
@@ -141,10 +141,10 @@ def create_security_group(vpc_id: str):
                     "IpProtocol":"tcp",
                     "FromPort":22,
                     "ToPort":22,
-                    'IpRanges':[{'CidrIp':CIDR_BLOCK}]
+                    'IpRanges':[{'CidrIp': SSH_CIDR}]
                 }]
             )
-            print("+ Created security group id=",sg_id,f"opening 22 from {CIDR_BLOCK}")
+            print("+ Created security group id=",sg_id,f"opening 22 from {SSH_CIDR}")
             return sg_id
 
         except botocore.exceptions.ClientError as e:
@@ -231,7 +231,7 @@ def setup_ec2_resources():
     igw_id = create_internet_gateway(vpc_id)
     az_name, az_id = get_availability_zones()
     subnet_id = create_subnets_for_vpc(vpc_id, az_name, az_id)
-    route_table_id = modify_route_table()
+    route_table_id = modify_route_table(vpc_id,subnet_id,igw_id)
     
     return {
         "vpc_id": vpc_id,
@@ -239,6 +239,6 @@ def setup_ec2_resources():
         "igw_id": igw_id,
         "subnet_id": subnet_id,
         "az_name": az_name,
-        "az_id": az_id
+        "az_id": az_id,
+        "route_table_id":route_table_id
     }
-

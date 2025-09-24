@@ -1,10 +1,11 @@
 import os
 import vpc
-from ec2_resource import ec2_client
-from dotenv import load_dotenv
 import botocore
+from dotenv import load_dotenv
+from ec2_resource import ec2_client
 
 load_dotenv()
+
 INSTANCE_TYPE=os.getenv('INSTANCE_TYPE')
 KEY_NAME = os.getenv('KEY_NAME')
 INSTANCE_NAME=os.getenv('INSTANCE_NAME')
@@ -55,7 +56,7 @@ def create_ec2_instance():
         try:
             print("\n! Creating an EC2 instance")
             print("! Setting Up VPC resource\n")
-            vpc_setup_results = vpc.setup_vpc_resources()
+            vpc_setup_results = vpc.setup_ec2_resources()
             subnet_id = vpc_setup_results['subnet_id']
             sg_id = vpc_setup_results['sg_id']
 
@@ -65,8 +66,12 @@ def create_ec2_instance():
                 MaxCount=1,
                 MinCount=1,
                 KeyName=KEY_NAME,
-                SubnetId=subnet_id,
-                SecurityGroupIds=[sg_id],
+                NetworkInterfaces=[{
+                    'SubnetId': subnet_id,
+                    'DeviceIndex': 0,
+                    'Groups': [sg_id],
+                    'AssociatePublicIpAddress': True
+                }],
                 TagSpecifications=[{
                     'ResourceType': 'instance',
                     'Tags': [{'Key': 'Name', 'Value': INSTANCE_NAME}]
@@ -85,3 +90,30 @@ def create_ec2_instance():
 def wait_for_instance_creation(id: str):
     waiter = ec2.get_waiter('instance_running')
     waiter.wait(InstanceIds=[id])
+
+
+def stop_ec2_instance():
+    pass
+
+def terminate_instance():
+    pass
+
+
+def get_public_ip():
+    print(f"! Getting public ip for {INSTANCE_NAME}")
+    response_public_ip = ec2.describe_instances(
+        Filters=[{
+            'Name':'tag:Name','Values':[INSTANCE_NAME],
+            'Name':'instance-state-name','Values':['running'],
+        }]
+    )
+    images = response_public_ip['Reservations']
+    if(images):
+        images_data = images[0]['Instances']
+        Associtaion_data = images_data[0]['NetworkInterfaces'][0]['Association']
+        public_ip = Associtaion_data['PublicIp']
+        print(public_ip)
+        return public_ip
+    else:
+        print(f"! Instance {INSTANCE_NAME} doesnt exists.")
+        return False
