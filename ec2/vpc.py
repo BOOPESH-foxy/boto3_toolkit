@@ -31,7 +31,7 @@ def check_vpc_existence():
         print(f"! VPC {VPC_NAME} exists\n")
         return vpc_id
     else:
-        print(f"! Vpc {VPC_NAME} doesn't exist,Creating one.")
+        print(f"! Vpc {VPC_NAME} doesn't exist.")
         return False
 
 def check_security_group_existence(vpc_id: str):
@@ -242,3 +242,20 @@ def setup_ec2_resources():
         "az_id": az_id,
         "route_table_id":route_table_id
     }
+
+
+
+
+# TODO
+# def delete_ec2_resources():
+#     vpc_id = check_vpc_existence()
+#     if(vpc_id):
+#         try:
+#             print(f"! Deleting VPC {VPC_NAME} and its resources")
+#             response = ec2.delete_vpc(
+#                 VpcId=vpc_id
+#             )
+#             print(f"- Deleted VPC and its resources successfully")
+#         except Exception as e:
+#             print(":: Error ::",e)
+#             raise

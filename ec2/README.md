@@ -1,8 +1,10 @@
 
 # AWS EC2 Automation with Boto3
 
-This repository is a **hands-on tutorial** for managing **Amazon EC2** instances using **Python (boto3)**.  
-It is structured step by step, starting from **key pair generation**, and extending toward **security groups**, **VPC creation**, **subnet management**, **EC2 instance launching**, and more.
+This repository is a **ready-to-use tutorial and utility** for managing **Amazon EC2** instances using **Python (boto3)**.  
+It is structured step by step, starting from **key pair generation**, and extending toward **security groups**, **VPC creation**, **subnet management**, **route table configuration**, **EC2 instance launching**, and **programmatic SSH access**.  
+
+This repo is ideal for **hands-on labs**, experimentation, and learning, allowing users to explore EC2 provisioning and networking automation in a clear, reusable codebase.
 
 ---
 
@@ -25,7 +27,7 @@ It is structured step by step, starting from **key pair generation**, and extend
 First, install the required dependencies:
 
 ```bash
-pip install boto3 python-dotenv
+pip install boto3 python-dotenv typer paramiko
 ```
 
 Next, configure your AWS CLI with your credentials:
@@ -44,14 +46,18 @@ This will prompt you for:
 Create a `.env` file with the following contents. This file will store your configuration securely.
 
 ```env
-REGION = 'your-aws-region'  # Example: 'ap-south-1'
-KEY_NAME = 'your-key-name'   # Example: 'my-ec2-key-pair'
+REGION = 'your-aws-region'          # Example: 'ap-south-1'
+KEY_NAME = 'your-key-name'          # Example: 'my-ec2-key-pair'
 KEY_FILE = '../path-to-generated-key-pair.pem'  # Path to save your private key or existing key
-INSTANCE_TYPE = 't2.micro'  # Example: 't2.micro'
-CIDR_BLOCK = '10.0.0.0/16'  # Example: VPC CIDR block
-VPC_NAME = 'my-vpc'         # Name for your VPC
-SECURITY_GROUP_NAME = 'my-security-group'  # Name for the security group
-SUBNET_CIDR_BLOCK = '10.0.1.0/24'  # CIDR block for your subnet
+INSTANCE_TYPE = 't2.micro'          # Example: 't2.micro'
+INSTANCE_NAME='foo-instance'        # Name of your instance
+CIDR_BLOCK = '10.0.0.0/16'          # Example: VPC CIDR block
+VPC_NAME = 'my-vpc'                 # Name for your VPC
+SECURITY_GROUP_NAME = 'my-security-group'       # Name for the security group
+SUBNET_CIDR_BLOCK = '10.0.1.0/24'   # CIDR block for your subnet
+SSH_CIDR='10.0.0.0/24'              # Your IP or subnet range
+USER_NAME='ec2-user'                # Provide the user name as per the machine image
+AZ='ap-south-1a'                    # Look for the list of availability zones in aws console
 ```
 
 **Important Notes**:
@@ -62,9 +68,30 @@ SUBNET_CIDR_BLOCK = '10.0.1.0/24'  # CIDR block for your subnet
 Clone this repository and navigate to the EC2 automation directory:
 
 ```bash
-git clone https://github.com/your-repo/boto3_toolkit.git
+git clone https://github.com/BOOPESH-foxy/boto3_toolkit.git
 cd boto3_toolkit/ec2
-python3 main.py
+```
+Run the below sh command to get a list of commands and its description as followed.
+
+```bash
+python3 main.py --help
+```
+```
+Command	                                            Description
+create_ec2_resources	        Create VPC, IGW, subnets, route table, and security groups
+create_ec2_instance	            Launch a ready-to-use EC2 instance with all parameters from .env
+is_instance_running	            Check if the EC2 instance is running
+ssh_instance	                SSH into the instance using Paramiko CLI
+start_instance	                Start a stopped EC2 instance
+stop_instance	                Stop a running EC2 instance
+terminate_instance	            Terminate the EC2 instance
+
+TODO: delete_ec2_resources to delete VPC and dependent resources.
+```
+
+### 4. Usage example
+```
+python3 main.py create_ec2_resources
 ```
 
 ---
@@ -79,40 +106,29 @@ boto3_toolkit/
     ├── ec2_instance.py      # EC2 instance creation and management
     ├── ec2_resource.py      # EC2 client and resource functions
     ├── key_pair.py          # EC2 key pair creation and management
-    ├── vpc.py               # VPC creation, security groups, subnets, and IGW
-    ├── route_table.py       # Route table creation and management
-    ├── main.py              # Main script to run the EC2 and VPC automation
-    ├── README.md               
-    └── __pycache__/         # Compiled Python files (automatically generated)
-
+    ├── vpc.py               # VPC , security groups, subnets, and IGW creation
+    ├── route_table.py       # Route table creation and management and association
+    ├── main.py              # Main script to access all the functions
+    ├── ssh_ec2.py           # SSH into the instance created    
+    └── README.md               
 ```
-
-### Module Descriptions:
-
-- **`ec2_instance.py`**: This file contains functions for managing EC2 instances, including starting, stopping, and describing instances.
-- **`ec2_resource.py`**: This provides functions for interacting with EC2 resources using the `boto3.resource` and `boto3.client` APIs.
-- **`key_pair.py`**: This file handles key pair generation and checking if the key pair already exists in local path. It also manages storing the private key in a file and change its permissions using chmod.
-- **`vpc.py`**: Manages the creation of VPCs, subnets, security groups, and internet gateways. It checks whether resources already exist and creates them if it doesn't exists.
-- **`route_table.py`**: Manages creating and associating route tables with subnets in the VPC for traffic routing.
-- **`main.py`**: The entry point of the script. It ties together the different operations like creating VPCs, security groups, subnets, ,instances and accessing them via ssh.
-
----
 
 ## Learning Goals
 
-1. **Work with EC2 Key Pairs**: Learn how to securely generate, store, and use EC2 key pairs.
-2. **Understand Security Groups**: Learn how to create and manage security groups to define firewall rules for EC2 instances.
-3. **Launch EC2 Instances**: Learn how to provision EC2 instances with the right configuration (instance type, AMI, security groups, etc.).
-## TODO's
-1. **Connect to EC2 Instances Programmatically**: Use Python to SSH into EC2 instances and run commands interactively.
+1. **Work with EC2 Key Pairs (`key_pair.py`)**: Learn how to securely generate, store, and use EC2 key pairs, and manage permissions for SSH access.  
+2. **Understand Security Groups (`vpc.py`)**: Learn how to create and manage security groups to define firewall rules for EC2 instances, including opening SSH access for specific IPs or CIDR ranges.  
+3. **Create and Manage VPCs and Networking (`vpc.py`, `route_table.py`)**: Learn how to provision VPCs, subnets, route tables, and internet gateways, and associate them correctly for public internet access.  
+4. **Launch and Manage EC2 Instances (`ec2_instance.py`)**: Learn how to provision EC2 instances with the right configuration (instance type, AMI, key pair, security groups, subnet, etc.), check their status, and start/stop/terminate them programmatically.  
+5. **Connect to EC2 Instances Programmatically (`ssh_ec2.py`)**: Use Python and Paramiko to SSH into EC2 instances, run commands interactively, and automate instance configuration tasks.  
+6. **CLI Automation (`main.py`)**: Learn how to tie all operations together into a Typer-based CLI for managing EC2 resources, networking, and SSH connections from a single interface.
 
 ---
 
 ## Notes
 
 - **Security**: Always ensure that your `.pem` files (private keys) are never committed to source control. They should be kept in a secure, private location.
-- **IAM Permissions**: Ensure that your AWS credentials have appropriate permissions to create and manage EC2, VPC, and other AWS resources.
 - **SSH Access**: Limit SSH access to the necessary IP ranges to enhance security (avoid using `0.0.0.0/0` for public access).
+- **Network issue**: Have a look at the public ip of the system to add it into the security group for limited SSH access as the internet providers may have dynamic ip allocation, which causes fails in making connection with the instance. 
 
 ---
 
@@ -122,15 +138,6 @@ Contributions are welcome! If you’d like to improve this project, please:
 - Fork the repo.
 - Open issues for bug fixes or improvements.
 - Submit pull requests (PRs) to expand EC2 automation features (e.g., EBS volume management, snapshots, AMI creation, etc.).
-
----
-
-## Roadmap for Future Enhancements
-
-1. **VPC Peering**: Automate VPC peering connections between multiple VPCs.
-2. **NAT Gateway Setup**: Add support for setting up a NAT Gateway for private subnet internet access.
-3. **AMI Management**: Add functionality to create and manage Amazon Machine Images (AMIs) from instances.
-4. **EBS Volumes**: Add support for creating and attaching Elastic Block Store (EBS) volumes to EC2 instances.
 
 ---
 

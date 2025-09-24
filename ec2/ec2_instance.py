@@ -17,7 +17,7 @@ OS_OPTIONS = {
 
 def get_ami_id(os_choise_num: str):
     os_choise = OS_OPTIONS[os_choise_num]
-    print(f"! Fetching AMI id for {os_choise['name']}")
+    print(f"\n! Fetching AMI id for {os_choise['name']}")
     os_id_filter = os_choise["filter_name"]
     response_instances = ec2.describe_images(
         Owners=['amazon'],
@@ -29,6 +29,24 @@ def get_ami_id(os_choise_num: str):
     images = response_instances['Images'][0]
     image_id = images['ImageId']
     return image_id
+
+def check_stopped_instance_existence():
+    print(f"! Checking for stopped {INSTANCE_NAME} existence")
+    response_instance_existence = ec2.describe_instances(
+        Filters=[{
+            'Name':'tag:Name','Values':[INSTANCE_NAME],
+            'Name':'instance-state-name','Values':['stopped'],
+        }]
+    )
+    images = response_instance_existence['Reservations']
+    if(images):
+        images_data = images[0]['Instances']
+        instanceId = images_data[0]['InstanceId']
+        print(f"! Instance {INSTANCE_NAME} exists.")
+        return instanceId
+    else:
+        print(f"! Instance {INSTANCE_NAME} doesnt exists.")
+        return False
 
 def check_instance_existence():
     print(f"! Checking for {INSTANCE_NAME} existence")
@@ -42,7 +60,7 @@ def check_instance_existence():
     if(images):
         images_data = images[0]['Instances']
         instanceId = images_data[0]['InstanceId']
-        print("! Instance is already up with the given name !")
+        print("! Instance is running with the given name !")
         return instanceId
     else:
         print(f"! Instance {INSTANCE_NAME} doesnt exists.")
@@ -92,28 +110,41 @@ def wait_for_instance_state(id: str,wait_for: str):
     waiter = ec2.get_waiter(wait_for)
     waiter.wait(InstanceIds=[id])
 
+def start_ec2_instance():
+    instance_id = check_stopped_instance_existence()
+    if(instance_id):
+        print(f"! To Start a stopped instance {INSTANCE_NAME}")
+        response = ec2.start_instances(
+            InstanceIds=[instance_id]
+        )
+        wait_for = 'instance_running'
+        wait_for_instance_state(instance_id,wait_for)
+        print("- Started instance successfully")
+        return True
+
 def stop_ec2_instance():
     instance_id = check_instance_existence()
-    print(f"! To Stop instance {INSTANCE_NAME}")
-    response = ec2.stop_instances(
-        InstanceIds=[instance_id]
-    )
-    wait_for = 'instance_stopped'
-    wait_for_instance_state(instance_id,)
-    print("- Stopped instance successfully")
-    return True
+    if(instance_id):
+        print(f"! To Stop instance {INSTANCE_NAME}")
+        response = ec2.stop_instances(
+            InstanceIds=[instance_id]
+        )
+        wait_for = 'instance_stopped'
+        wait_for_instance_state(instance_id,wait_for)
+        print("- Stopped instance successfully")
+        return True
 
 def terminate_ec2_instance():
-    instance_id = check_instance_existence()
-    print(f"! Terminate instance {INSTANCE_NAME}")
-    response = ec2.terminate_instances(
-        InstanceIds=[instance_id]
-    )
-    wait_for = 'instance_terminated'
-    wait_for_instance_state(instance_id,)
-    print("- Terminated instance successfully")
-    return True
-
+    instance_id = check_stopped_instance_existence()
+    if(instance_id):
+        print(f"! Terminating instance {INSTANCE_NAME}")
+        response = ec2.terminate_instances(
+            InstanceIds=[instance_id]
+        )
+        wait_for = 'instance_terminated'
+        wait_for_instance_state(instance_id,wait_for)
+        print("- Terminated instance successfully")
+        return True
 
 def get_public_ip():
     print(f"! Getting public ip for {INSTANCE_NAME}")
