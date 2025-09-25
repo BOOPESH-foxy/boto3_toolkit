@@ -31,7 +31,7 @@ Before running the toolkit, install the following dependencies:
 # AWS SDK for Python (EC2, S3, etc.)
 pip install boto3
 
-# Low-level AWS library for boto3 (auto-installed with boto3)
+# Low level AWS library for boto3 (auto-installed with boto3)
 pip install botocore
 
 # CLI framework for Python
@@ -40,5 +40,3 @@ pip install typer
 # Load environment variables from .env files
 pip install python-dotenv
 
-# AWS CLI (optional, for broader command-line management)
-pip install awscli
